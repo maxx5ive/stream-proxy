@@ -6,12 +6,18 @@ export default async function handler(req, res) {
   }
   
   try {
-    const response = await fetch(decodeURIComponent(url));
+    const decodedUrl = decodeURIComponent(url);
+    const response = await fetch(decodedUrl);
+    
+    if (!response.ok) {
+      return res.status(response.status).send('Error fetching file');
+    }
+    
     const buffer = await response.arrayBuffer();
     
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'no-cache');
     
     res.send(Buffer.from(buffer));
   } catch (e) {
