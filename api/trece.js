@@ -2,7 +2,6 @@ export default async function handler(req, res) {
   const baseUrl = 'http://181.209.37.74:8001/play/a07b/';
   
   try {
-    // Si piden un segmento .ts o .m3u8 específico
     const segment = req.query.segment || 'index.m3u8';
     const targetUrl = baseUrl + segment;
     
@@ -14,24 +13,25 @@ export default async function handler(req, res) {
     
     let data = await response.text();
     
-    // Si es .m3u8, reescribir URLs de los segmentos
+    // Si es .m3u8, reescribir URLs
     if (segment.endsWith('.m3u8')) {
       const host = req.headers.host;
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       
-      // Reescribir URLs relativas
+      // Reescribir URLs absolutas del servidor original
       data = data.replace(
-        /^([^#\n].+\.ts)$/gm,
+        /http:\/\/181\.209\.37\.74:8001\/play\/a07b\/([^\s\n]+)/g,
         `${protocol}://${host}/api/trece?segment=$1`
       );
+      
+      // Reescribir URLs relativas
       data = data.replace(
-        /^([^#\n].+\.m3u8)$/gm,
+        /^(?!#|http)(.+\.(ts|m3u8))$/gm,
         `${protocol}://${host}/api/trece?segment=$1`
       );
       
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
     } else {
-      // Si es .ts, servir como video
       res.setHeader('Content-Type', 'video/mp2t');
     }
     
